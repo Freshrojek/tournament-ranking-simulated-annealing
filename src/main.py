@@ -43,16 +43,17 @@ def get_random_edge(random_number, tournament_participants):
 
 def get_random_neighbouring_ranking(tournament_participants, tournament_weighting, initial_ranking):
     start_edge_A, end_edge_A = get_random_edge(random.random(), tournament_participants)
-    sub_list_a = (list(tournament_participants.keys()))[0:start_edge_A - 1]
-    sub_list_b = (list(tournament_participants.keys()))[end_edge_A:len(tournament_participants)]
+    sub_list_A = (list(tournament_participants.keys()))[0:start_edge_A - 1]
+    sub_list_B = (list(tournament_participants.keys()))[end_edge_A:len(tournament_participants)]
     print(start_edge_A, end_edge_A)
-    print(f"sub_list_a = {sub_list_a}")
-    print(f"sub_list_b = {sub_list_b}")
-    remaining_participants = sub_list_a + sub_list_b
+    print(f"sub_list_a = {sub_list_A}")
+    print(f"sub_list_b = {sub_list_B}")
+    remaining_participants = sub_list_A + sub_list_B
     print(remaining_participants)
     start_edge_B, end_edge_B = get_random_edge(random.random(), remaining_participants)
-
-
+    print(start_edge_B, end_edge_B)
+    if ((start_edge_A == 0) and (end_edge_A == 0)) or ((start_edge_B == 0) and (end_edge_B == 0)):
+        print("Error, both edges are 0")
 
 
 def simulated_annealing_algorithm():
