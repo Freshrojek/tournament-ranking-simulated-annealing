@@ -34,27 +34,24 @@ def get_weighting(file_data, total_participants):
 
 def get_random_edge(random_number, tournament_participants):
     start_edge, end_edge = 0, 0
-    for participant in tournament_participants:
+    for participant in range(len(tournament_participants)):
         if ((int(participant) - 1) / (len(tournament_participants) - 1) <= random_number) and (
                 random_number < (int(participant) / (len(tournament_participants) - 1))):
             start_edge, end_edge = int(participant), int(participant) + 1
-    return start_edge, end_edge,
+    return start_edge, end_edge
 
 
-def get_random_neighbouring_ranking(tournament_participants, tournament_weighting, initial_ranking):
+def get_random_neighbouring_ranking(tournament_participants):
     start_edge_A, end_edge_A = get_random_edge(random.random(), tournament_participants)
     sub_list_A = (list(tournament_participants.keys()))[0:start_edge_A - 1]
     sub_list_B = (list(tournament_participants.keys()))[end_edge_A:len(tournament_participants)]
-    print(start_edge_A, end_edge_A)
-    print(f"sub_list_a = {sub_list_A}")
-    print(f"sub_list_b = {sub_list_B}")
+
     remaining_participants = sub_list_A + sub_list_B
     print(remaining_participants)
     start_edge_B, end_edge_B = get_random_edge(random.random(), remaining_participants)
-    print(start_edge_B, end_edge_B)
     if ((start_edge_A == 0) and (end_edge_A == 0)) or ((start_edge_B == 0) and (end_edge_B == 0)):
         print("Error, both edges are 0")
-
+    print(start_edge_B, end_edge_B)
 
 def simulated_annealing_algorithm():
     tournament_participants, tournament_weighting = get_data()
@@ -64,11 +61,8 @@ def simulated_annealing_algorithm():
     num_non_improve = 8000
     loops_without_optimal_solution = 0
     initial_ranking = [i for i in tournament_participants]
-    # print((list(tournament_participants.keys()))[0:5])
-    # print(tournament_participants[3:6])
     for i in range(int(temperature_length)):
-        neighbouring_ranking = get_random_neighbouring_ranking(tournament_participants, tournament_weighting,
-                                                               initial_ranking)
+        neighbouring_ranking = get_random_neighbouring_ranking(tournament_participants)
 
 
 simulated_annealing_algorithm()
