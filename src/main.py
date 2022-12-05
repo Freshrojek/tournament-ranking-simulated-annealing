@@ -50,7 +50,7 @@ def get_second_random_edge(random_number, remaining_participants, previous_ranki
             if (int((previous_ranking.index(remaining_participants[end_edge - 1]))) - (
                     int(previous_ranking.index(remaining_participants[start_edge - 1])))) != 1:
                 print("redoing function")
-                get_second_random_edge(random.random(), remaining_participants, previous_ranking)
+                start_edge, end_edge = get_second_random_edge(random.random(), remaining_participants, previous_ranking)
 
     return start_edge, end_edge
 
@@ -58,7 +58,7 @@ def get_second_random_edge(random_number, remaining_participants, previous_ranki
 def get_random_neighbouring_ranking(current_ranking):
     start_edge_A, end_edge_A = get_first_random_edge(random.random(), current_ranking)
     sub_list_A = current_ranking[0:start_edge_A - 1]
-    sub_list_B = current_ranking[end_edge_A:len(current_ranking)]
+    sub_list_B = current_ranking[end_edge_A + 1:len(current_ranking)]
     print(f"start edge a, {start_edge_A}")
     print(f"end edge a, {end_edge_A}")
     print(f"sublist a, {sub_list_A}")
@@ -67,11 +67,35 @@ def get_random_neighbouring_ranking(current_ranking):
     remaining_participants = sub_list_A + sub_list_B
     print(remaining_participants)
     start_edge_B, end_edge_B = get_second_random_edge(random.random(), remaining_participants, current_ranking)
+    end_edge_B_value = current_ranking[start_edge_B]
     print(f"start edge b, {start_edge_B}")
     print(f"end edge b, {end_edge_B}")
     sub_list_C = remaining_participants[0:start_edge_B - 1]
     sub_list_D = remaining_participants[end_edge_B:len(remaining_participants)]
     print(sub_list_C + sub_list_D)
+    sub_tour = []
+    print(f"index1test {current_ranking.index(current_ranking[start_edge_A])}")
+    print(f"index2test {current_ranking.index(remaining_participants[end_edge_B - 1])}")
+
+    if int(current_ranking.index(current_ranking[start_edge_A])) > int(
+            current_ranking.index(remaining_participants[end_edge_B - 1])):
+        sub_tour = current_ranking[int(current_ranking.index(remaining_participants[end_edge_B - 1])):int(
+            current_ranking.index(current_ranking[start_edge_A]))]
+        sub_tour.insert(int(current_ranking.index(current_ranking[end_edge_A-1])), current_ranking[end_edge_A-1])
+        sub_tour.insert(int(
+            current_ranking.index(remaining_participants[start_edge_B - 1])), remaining_participants[start_edge_B - 1])
+    else:
+        sub_tour = current_ranking[int(current_ranking.index(current_ranking[end_edge_A - 1])):int(
+            current_ranking.index(remaining_participants[start_edge_B - 1]))]
+        sub_tour.insert(int(current_ranking.index(remaining_participants[end_edge_B - 1])),
+                        remaining_participants[end_edge_B - 1])
+        sub_tour.insert(int(current_ranking.index(current_ranking[start_edge_A])),
+                        current_ranking.index(current_ranking[start_edge_A]))
+    sub_tour.reverse()
+    print(f"reversed sub tour = {sub_tour}")
+
+    print(current_ranking)
+
     if ((start_edge_A == 0) and (end_edge_A == 0)) or ((start_edge_B == 0) and (end_edge_B == 0)):
         print("Error, both edges are 0")
 
