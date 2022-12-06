@@ -59,6 +59,8 @@ def get_random_neighbouring_ranking(current_ranking):
     start_edge_A, end_edge_A = get_first_random_edge(random.random(), current_ranking)
     sub_list_A = current_ranking[0:start_edge_A - 1]
     sub_list_B = current_ranking[end_edge_A + 1:len(current_ranking)]
+    first_edge = (current_ranking[start_edge_A - 1], current_ranking[end_edge_A - 1])
+    print(first_edge)
     # print(f"start edge a, {start_edge_A}")
     # print(f"end edge a, {end_edge_A}")
     # print(f"sublist a, {sub_list_A}")
@@ -68,6 +70,8 @@ def get_random_neighbouring_ranking(current_ranking):
     # print(remaining_participants)
     start_edge_B, end_edge_B = get_second_random_edge(random.random(), remaining_participants, current_ranking)
     end_edge_B_value = current_ranking[start_edge_B]
+    second_edge = (remaining_participants[start_edge_B - 1], remaining_participants[end_edge_B - 1])
+    print(second_edge)
     # print(f"start edge b, {start_edge_B}")
     # print(f"end edge b, {end_edge_B}")
     sub_list_C = remaining_participants[0:start_edge_B - 1]
@@ -97,23 +101,40 @@ def get_random_neighbouring_ranking(current_ranking):
     sub_tour.reverse()
     # print(f"reversed sub tour = {sub_tour}")
     current_ranking[sub_tour_start:sub_tour_end] = sub_tour
-    # print(current_ranking)
+    print(current_ranking)
+    new_first_edge = (first_edge[0], second_edge[1])
+    new_second_edge = (second_edge[0],)
+    print(f"new first edge = {new_first_edge}")
 
     if ((start_edge_A == 0) and (end_edge_A == 0)) or ((start_edge_B == 0) and (end_edge_B == 0)):
         print("Error, both edges are 0")
-    return current_ranking
+    return current_ranking, first_edge, second_edge
 
 
 def get_cost(tournament_participants, tournament_weighting, ranking):
     cost = 0
     for matchup, weighting in tournament_weighting.items():
         for i in range(len(ranking)):
-            for j in range(i+1, len(ranking)):
+            for j in range(i + 1, len(ranking)):
                 if matchup[0] == ranking[j] and matchup[1] == ranking[i]:
-                    print(f"{ranking[j]} beat {ranking[i]} by {weighting}")
+                    # print(f"{ranking[j]} beat {ranking[i]} by {weighting}")
                     cost = cost + int(weighting)
-    print(cost)
+    # print(cost)
     return cost
+
+
+def get_cost_difference(tournament_participants, tournament_weighting, first_edge, second_edge, cost):
+    cost_difference = 0
+    for matchup, weighting in tournament_weighting.items():
+        if first_edge[1] == matchup[0] and first_edge[0] == matchup[1]:
+            print(matchup, weighting)
+            print(f"the first cost is reduced by {weighting}")
+            first_edge_cost_reduction = int(weighting)
+        if second_edge[1] == matchup[0] and second_edge[0] == matchup[1]:
+            print(matchup, weighting)
+            print(f"the second cost is reduced by {weighting}")
+            second_edge_cost_reduction = int(weighting)
+    return cost, cost_difference
 
 
 def simulated_annealing_algorithm():
@@ -122,7 +143,8 @@ def simulated_annealing_algorithm():
     #                         ("A", "B"): "9", ("F", "A"): "6"}
     # tournament_participants = {"A": "Alice", "B": "bettie", "C": "Charlie", "D": "Dan", "E": "Ellie", "F": "Fred",
     #                            "G": "Gina", "H": "Harry"}
-    temperature_length = 10
+    # temperature_length = 10
+    temperature_length = 1
     cooling_ration = 0.95
     num_non_improve = 8000
     loops_without_optimal_solution = 0
@@ -131,8 +153,10 @@ def simulated_annealing_algorithm():
     cost = get_cost(tournament_participants, tournament_weighting, initial_ranking)
     # cost = get_cost(tournament_participants, tournament_weighting, previous_cost)
     for i in range(int(temperature_length)):
-        cost = get_cost(tournament_participants, tournament_weighting, current_ranking)
-        neighbouring_ranking = get_random_neighbouring_ranking(current_ranking)
+        neighbouring_ranking, first_edge, second_edge = get_random_neighbouring_ranking(current_ranking)
+        cost, cost_difference = get_cost_difference(tournament_participants, tournament_weighting, first_edge,
+                                                    second_edge, cost)
+    print(cost)
 
 
 simulated_annealing_algorithm()
