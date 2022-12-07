@@ -61,22 +61,11 @@ def get_random_neighbouring_ranking(current_ranking):
     start_edge_A, end_edge_A = get_first_random_edge(random(), current_ranking)
     sub_list_A = current_ranking[:start_edge_A - 1]
     sub_list_B = current_ranking[end_edge_A + 1:]
-    first_edge = (current_ranking[start_edge_A - 1], current_ranking[end_edge_A - 1])
-    # print(first_edge)
-    # print(f"start edge a, {start_edge_A}")
-    # print(f"end edge a, {end_edge_A}")
-    # print(f"sublist a, {sub_list_A}")
-    # print(f"sublist b, {sub_list_B}")
-
     remaining_participants = sub_list_A + sub_list_B
-    # print(remaining_participants)
     start_edge_B, end_edge_B = get_second_random_edge(random(), remaining_participants, current_ranking)
     sub_tour = []
     sub_tour_start = 0
     sub_tour_end = len(current_ranking) - 1
-    second_edge = ()
-    new_first_edge = ()
-    new_second_edge = ()
 
     if int(current_ranking.index(current_ranking[start_edge_A])) > int(
             current_ranking.index(remaining_participants[end_edge_B - 1])):
@@ -84,35 +73,22 @@ def get_random_neighbouring_ranking(current_ranking):
         sub_tour_end = int(current_ranking.index(current_ranking[start_edge_A]))
         sub_tour = current_ranking[int(current_ranking.index(remaining_participants[end_edge_B - 1])):int(
             current_ranking.index(current_ranking[start_edge_A]))]
-
-        second_edge = (current_ranking[start_edge_B - 1], current_ranking[end_edge_B - 1])
-        new_first_edge = (second_edge[0], first_edge[0])
-        new_second_edge = (second_edge[1], first_edge[1])
     else:
         sub_tour_start = int(current_ranking.index(current_ranking[end_edge_A - 1]))
         sub_tour_end = int(
             current_ranking.index(remaining_participants[start_edge_B - 1]))
         sub_tour = current_ranking[int(current_ranking.index(current_ranking[end_edge_A - 1])):int(
             current_ranking.index(remaining_participants[start_edge_B - 1]))]
-        second_edge = (current_ranking[start_edge_B + 1], current_ranking[end_edge_B + 1])
-        new_first_edge = (first_edge[0], second_edge[0])
-        new_second_edge = (first_edge[1], second_edge[1])
 
-    # print(f"sub tour = {sub_tour}")
     sub_tour_reversed = sub_tour[:]
     sub_tour_reversed.reverse()
-
-    # print(f"reversed sub tour = {sub_tour}")
     old_tour = current_ranking[sub_tour_start - 1:sub_tour_end + 1]
     temp_current_ranking = current_ranking[:]
     temp_current_ranking[sub_tour_start:sub_tour_end] = sub_tour_reversed
     new_tour = temp_current_ranking[sub_tour_start - 1:sub_tour_end + 1]
-    # print(f"old_tour {old_tour}")
-    # print(f"new_tour {new_tour}")
-
     if ((start_edge_A == 0) and (end_edge_A == 0)) or ((start_edge_B == 0) and (end_edge_B == 0)):
         print("Error, both edges are 0")
-    return temp_current_ranking, first_edge, second_edge, new_first_edge, new_second_edge, old_tour, new_tour
+    return temp_current_ranking, old_tour, new_tour
 
 
 def get_cost(tournament_weighting, ranking):
@@ -122,41 +98,13 @@ def get_cost(tournament_weighting, ranking):
             for j in range(i + 1, len(ranking)):
                 if str(matchup[0]) == str(ranking[j]) and str(matchup[1]) == str(ranking[i]):
                     ranking_cost = ranking_cost + int(weighting)
-    # print(ranking_cost)
     return ranking_cost
 
 
-def get_cost_difference(tournament_participants, tournament_weighting, first_edge, second_edge, new_first_edge,
-                        new_second_edge, old_tour, new_tour, cost):
-    # print(f"first edge {first_edge}")
-    # print(f"second edge {second_edge}")
-    # print(f"new first edge {new_first_edge}")
-    # print(f"new second edge {new_second_edge}")
-
-    # first_edge_cost = get_cost(tournament_weighting, first_edge)
-    # print(f"first_edge_cost = {first_edge_cost}")
-    #
-    # second_edge_cost = get_cost(tournament_weighting, second_edge)
-    # print(f"second_edge_cost = {second_edge_cost}")
-    #
-    # new_first_edge_cost = get_cost(tournament_weighting, new_first_edge)
-    # print(f"new_first_edge_cost = {new_first_edge_cost}")
-    #
-    # new_second_edge_cost = get_cost(tournament_weighting, new_second_edge)
-    # print(f"new_second_edge_cost = {new_second_edge_cost}")
-
+def get_cost_difference(tournament_participants, tournament_weighting, old_tour, new_tour, cost):
     old_tour_cost = get_cost(tournament_weighting, old_tour)
     new_tour_cost = get_cost(tournament_weighting, new_tour)
-
-    # print(f"old_tour_cost = {old_tour_cost}")
-    # print(f"new_tour_cost = {new_tour_cost}")
-
-    # new_cost = cost - ((first_edge_cost + second_edge_cost) + (new_first_edge_cost + new_second_edge_cost))
     new_cost = (int(cost) - old_tour_cost) + new_tour_cost
-    # print(f"cost = {cost}")
-    # print(f"new cost = {new_cost}")
-    # print(f"new cost - cost = {new_cost - cost}")
-
     return new_cost, new_cost - cost
 
 
@@ -173,10 +121,9 @@ def simulated_annealing_algorithm():
     cost = get_cost(tournament_weighting, initial_ranking)
     while loops_without_optimal_solution < num_non_improve:
         for _ in range(temperature_length):
-            neighbouring_ranking, first_edge, second_edge, new_first_edge, new_second_edge, old_tour, new_tour = get_random_neighbouring_ranking(
+            neighbouring_ranking,old_tour, new_tour = get_random_neighbouring_ranking(
                 current_ranking)
-            new_cost, cost_difference = get_cost_difference(tournament_participants, tournament_weighting, first_edge,
-                                                            second_edge, new_first_edge, new_second_edge,
+            new_cost, cost_difference = get_cost_difference(tournament_participants, tournament_weighting,
                                                             old_tour, new_tour, cost)
             if cost_difference <= 0:
                 current_ranking = neighbouring_ranking[:]
