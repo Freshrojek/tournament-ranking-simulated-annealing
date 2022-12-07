@@ -3,6 +3,7 @@ from random import random
 from math import exp
 from time import time
 
+
 def get_data():
     file_data, total_participants = read_file()
     tournament_participants = get_participants(file_data, total_participants)
@@ -36,8 +37,8 @@ def get_weighting(file_data, total_participants):
 def get_first_random_edge(random_number, ranking_list):
     start_edge, end_edge = 0, 0
     for participant in range(len(ranking_list)):
-        if ((int(participant) - 1) / (len(ranking_list) - 1) <= random_number) and (
-                random_number < (int(participant) / (len(ranking_list) - 1))):
+        if (int(participant) - 1) / (len(ranking_list) - 1) <= random_number < int(participant) / (
+                len(ranking_list) - 1):
             start_edge, end_edge = int(participant), int(participant) + 1
     return start_edge, end_edge
 
@@ -45,8 +46,8 @@ def get_first_random_edge(random_number, ranking_list):
 def get_second_random_edge(random_number, remaining_participants, previous_ranking):
     start_edge, end_edge = 0, 0
     for participant in range(len(remaining_participants)):
-        if ((int(participant) - 1) / (len(remaining_participants) - 1) <= random_number) and (
-                random_number < (int(participant) / (len(remaining_participants) - 1))):
+        if (int(participant) - 1) / (len(remaining_participants) - 1) <= random_number < int(participant) / (
+                len(remaining_participants) - 1):
             start_edge, end_edge = int(participant) - 1, int(participant)
             if (int((previous_ranking.index(remaining_participants[end_edge - 1]))) - (
                     int(previous_ranking.index(remaining_participants[start_edge - 1])))) != 1:
@@ -58,8 +59,8 @@ def get_second_random_edge(random_number, remaining_participants, previous_ranki
 
 def get_random_neighbouring_ranking(current_ranking):
     start_edge_A, end_edge_A = get_first_random_edge(random(), current_ranking)
-    sub_list_A = current_ranking[0:start_edge_A - 1]
-    sub_list_B = current_ranking[end_edge_A + 1:len(current_ranking)]
+    sub_list_A = current_ranking[:start_edge_A - 1]
+    sub_list_B = current_ranking[end_edge_A + 1:]
     first_edge = (current_ranking[start_edge_A - 1], current_ranking[end_edge_A - 1])
     # print(first_edge)
     # print(f"start edge a, {start_edge_A}")
@@ -70,17 +71,9 @@ def get_random_neighbouring_ranking(current_ranking):
     remaining_participants = sub_list_A + sub_list_B
     # print(remaining_participants)
     start_edge_B, end_edge_B = get_second_random_edge(random(), remaining_participants, current_ranking)
-    end_edge_B_value = current_ranking[start_edge_B]
-    # print(f"start edge b, {start_edge_B}")
-    # print(f"end edge b, {end_edge_B}")
-    sub_list_C = remaining_participants[0:start_edge_B - 1]
-    sub_list_D = remaining_participants[end_edge_B:len(remaining_participants)]
-    # print(sub_list_C + sub_list_D)
     sub_tour = []
     sub_tour_start = 0
     sub_tour_end = len(current_ranking) - 1
-    # print(f"index1test {current_ranking.index(current_ranking[start_edge_A])}")
-    # print(f"index2test {current_ranking.index(remaining_participants[end_edge_B - 1])}")
     second_edge = ()
     new_first_edge = ()
     new_second_edge = ()
@@ -169,37 +162,25 @@ def get_cost_difference(tournament_participants, tournament_weighting, first_edg
 
 def simulated_annealing_algorithm():
     tournament_participants, tournament_weighting = get_data()
-    # tournament_weighting = {("B", "C"): "1", ("G", "F"): "3", ("D", "E"): "4",
-    #                         ("A", "B"): "9", ("F", "A"): "6"}
-    # tournament_participants = {"A": "Alice", "B": "bettie", "C": "Charlie", "D": "Dan", "E": "Ellie", "F": "Fred",
-    #                            "G": "Gina", "H": "Harry"}
-    # temperature_length = 10
-    temperature_length = 1
+    temperature_length = 10
     initial_temperature = 1.0
-    current_temperature = float(initial_temperature)
+    current_temperature = initial_temperature
     cooling_ratio = 0.95
     num_non_improve = 1
     loops_without_optimal_solution = 0
-    current_ranking, initial_ranking = [i for i in tournament_participants], [i for i in tournament_participants]
-    # get_random_neighbouring_ranking(initial_ranking, previous_ranking)
+    current_ranking, initial_ranking = list(tournament_participants), list(tournament_participants)
+
     cost = get_cost(tournament_weighting, initial_ranking)
     while loops_without_optimal_solution < num_non_improve:
-        for i in range(int(temperature_length)):
+        for _ in range(temperature_length):
             neighbouring_ranking, first_edge, second_edge, new_first_edge, new_second_edge, old_tour, new_tour = get_random_neighbouring_ranking(
                 current_ranking)
             new_cost, cost_difference = get_cost_difference(tournament_participants, tournament_weighting, first_edge,
                                                             second_edge, new_first_edge, new_second_edge,
                                                             old_tour, new_tour, cost)
             if cost_difference <= 0:
-                # print("found better ranking")
                 current_ranking = neighbouring_ranking[:]
                 cost = new_cost
-                # check = get_cost(tournament_weighting, current_ranking)
-                # # print(f"getting cost for  {current_ranking}")
-                #
-                # print(f"verifying the kemeny score is {check}")
-                # if check != new_cost:
-                #     print("error")
             else:
                 q = random()
                 if q < (exp((-cost) / current_temperature)):
@@ -211,6 +192,7 @@ def simulated_annealing_algorithm():
     print(" ")
     print(f"final = {cost}")
     print(time() - start_time)
+
 
 start_time = time()
 simulated_annealing_algorithm()
