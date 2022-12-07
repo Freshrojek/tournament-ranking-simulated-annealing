@@ -4,94 +4,69 @@ from math import exp
 from time import time
 
 
-def get_data():
+def get_data():  # this is a "middle man" function to build the dictionaries
     file_data, total_participants = read_file()
     tournament_participants = get_participants(file_data, total_participants)
     tournament_weighting = get_weighting(file_data, total_participants)
     return tournament_participants, tournament_weighting
 
 
-def read_file():
+def read_file():  # this is a short function to read the files
     file = open(sys.argv[1])
     file_data = file.read().splitlines()
     total_participants = file_data[0]
     return file_data, total_participants
 
 
-def get_participants(file_data, total_participants):
+def get_participants(file_data, total_participants):  # this fills a dictionary with participants from the file provided
     participants = {}
-    for i in range(int(total_participants)):
+    for i in range(int(total_participants)):  # loop through the data file
         id, name = file_data[i + 1].split(",")
         participants[id] = name
-    return participants
+    return participants  # return a dictionary of id->name
 
 
-def get_weighting(file_data, total_participants):
+def get_weighting(file_data,
+                  total_participants):  # this fills a dictionary with participants and weighting from the file provided
     tournament_weighting = {}
-    for i in range(int(total_participants) + 2, len(file_data)):
+    for i in range(int(total_participants) + 2, len(file_data)):  # loop through the file
         weight, participant_A, participant_B = file_data[i].split(",")
         tournament_weighting[(participant_A, participant_B)] = weight
-    return tournament_weighting
+    return tournament_weighting  # return the weighting dictionary
 
 
-def get_first_random_edge(random_number, ranking_list):
+def get_first_random_edge(random_number, ranking_list):  # this function gets the random edge from the ranking
     start_edge, end_edge = 0, 0
-    for participant in range(len(ranking_list)):
+    for participant in range(len(ranking_list)):  # loops through the ranking list
         if (int(participant) - 1) / (len(ranking_list) - 1) <= random_number < int(participant) / (
-                len(ranking_list) - 1):
+                len(ranking_list) - 1):  # using the random number, determing which edge is selected from the ranking
             start_edge, end_edge = int(participant), int(participant) + 1
-    return start_edge, end_edge
+    return start_edge, end_edge  # return the nodes to be swapped
 
 
-def get_second_random_edge(random_number, remaining_participants, previous_ranking):
-    start_edge, end_edge = 0, 0
-    for participant in range(len(remaining_participants)):
-        if (int(participant) - 1) / (len(remaining_participants) - 1) <= random_number < int(participant) / (
-                len(remaining_participants) - 1):
-            start_edge, end_edge = int(participant) - 1, int(participant)
-            if (int((previous_ranking.index(remaining_participants[end_edge - 1]))) - (
-                    int(previous_ranking.index(remaining_participants[start_edge - 1])))) != 1:
-                # print("redoing function")
-                start_edge, end_edge = get_second_random_edge(random(), remaining_participants, previous_ranking)
-
-    return start_edge, end_edge
-
-
-def get_random_neighbouring_ranking(current_ranking):
-    start_edge_A, end_edge_A = get_first_random_edge(random(), current_ranking)
-    sub_list_A = current_ranking[:start_edge_A - 1]
-    sub_list_B = current_ranking[end_edge_A + 1:]
-    remaining_participants = sub_list_A + sub_list_B
-    start_edge_B, end_edge_B = get_second_random_edge(random(), remaining_participants, current_ranking)
-    sub_tour = []
-    sub_tour_start = 0
-    sub_tour_end = len(current_ranking) - 1
-
-    if int(current_ranking.index(current_ranking[start_edge_A])) > int(
-            current_ranking.index(remaining_participants[end_edge_B - 1])):
-        sub_tour_start = int(current_ranking.index(remaining_participants[end_edge_B - 1]))
-        sub_tour_end = int(current_ranking.index(current_ranking[start_edge_A]))
-        sub_tour = current_ranking[int(current_ranking.index(remaining_participants[end_edge_B - 1])):int(
-            current_ranking.index(current_ranking[start_edge_A]))]
-    else:
-        sub_tour_start = int(current_ranking.index(current_ranking[end_edge_A - 1]))
-        sub_tour_end = int(
-            current_ranking.index(remaining_participants[start_edge_B - 1]))
-        sub_tour = current_ranking[int(current_ranking.index(current_ranking[end_edge_A - 1])):int(
-            current_ranking.index(remaining_participants[start_edge_B - 1]))]
-
-    sub_tour_reversed = sub_tour[:]
-    sub_tour_reversed.reverse()
-    old_tour = current_ranking[sub_tour_start - 1:sub_tour_end + 1]
+def get_random_neighbouring_ranking(current_ranking, tournament_weighting,
+                                    cost):  # this function gets the neighbouring solution
+    start_edge, end_edge = get_first_random_edge(random(), current_ranking)  # select a random edge
+    start = current_ranking[start_edge - 1]
+    end = current_ranking[end_edge - 1]
     temp_current_ranking = current_ranking[:]
-    temp_current_ranking[sub_tour_start:sub_tour_end] = sub_tour_reversed
-    new_tour = temp_current_ranking[sub_tour_start - 1:sub_tour_end + 1]
-    if ((start_edge_A == 0) and (end_edge_A == 0)) or ((start_edge_B == 0) and (end_edge_B == 0)):
-        print("Error, both edges are 0")
-    return temp_current_ranking, old_tour, new_tour
+    temp_current_ranking[start_edge - 1], temp_current_ranking[
+        end_edge - 1] = end, start  # swap the nodes on each side of the edge in the ranking
+    old_cost = 0
+    new_cost = 0
+    for matchup, weighting in tournament_weighting.items():  # a loop through the weighting dictionary
+        if str(matchup[0]) == str(end) and str(matchup[1]) == str(start):  # calulate the old cost of the two nodes
+            old_cost = int(weighting)
+        if str(matchup[0]) == str(start) and str(matchup[1]) == str(end):  # calulate the old cost of the two nodes
+            new_cost = int(weighting)
+    new_cost = (
+                       int(cost) - old_cost) + new_cost  # calculate the new cost by subtracting the old cost and adding the new cost
+    cost_difference = new_cost - cost
+    return temp_current_ranking, new_cost, cost_difference  # return the values
 
 
-def get_cost(tournament_weighting, ranking):
+def get_cost(tournament_weighting,
+             ranking):  # this function loops through a ranking, and adds up the cost of the weighting that disagrees with the ranking
     ranking_cost = 0
     for matchup, weighting in tournament_weighting.items():
         for i in range(len(ranking)):
@@ -101,45 +76,43 @@ def get_cost(tournament_weighting, ranking):
     return ranking_cost
 
 
-def get_cost_difference(tournament_participants, tournament_weighting, old_tour, new_tour, cost):
-    old_tour_cost = get_cost(tournament_weighting, old_tour)
-    new_tour_cost = get_cost(tournament_weighting, new_tour)
-    new_cost = (int(cost) - old_tour_cost) + new_tour_cost
-    return new_cost, new_cost - cost
-
-
-def simulated_annealing_algorithm():
-    tournament_participants, tournament_weighting = get_data()
+def simulated_annealing_algorithm():  # this is the main function which deals with the simulated annealing algorithm
+    tournament_participants, tournament_weighting = get_data()  # calls the function to get the participants and the weighting of the participants
     temperature_length = 10
     initial_temperature = 1.0
     current_temperature = initial_temperature
     cooling_ratio = 0.95
-    num_non_improve = 1
+    num_non_improve = 8000  # this is high to give us a good kemedy score
     loops_without_optimal_solution = 0
-    current_ranking, initial_ranking = list(tournament_participants), list(tournament_participants)
+    current_ranking, initial_ranking = list(tournament_participants), list(
+        tournament_participants)  # set the inital ranking to the data in numerical order by ID
 
-    cost = get_cost(tournament_weighting, initial_ranking)
-    while loops_without_optimal_solution < num_non_improve:
-        for _ in range(temperature_length):
-            neighbouring_ranking,old_tour, new_tour = get_random_neighbouring_ranking(
-                current_ranking)
-            new_cost, cost_difference = get_cost_difference(tournament_participants, tournament_weighting,
-                                                            old_tour, new_tour, cost)
-            if cost_difference <= 0:
-                current_ranking = neighbouring_ranking[:]
-                cost = new_cost
+    cost = get_cost(tournament_weighting, initial_ranking)  # get the initial cost based off the initial ranking
+    while loops_without_optimal_solution < num_non_improve:  # outer loop until the condition is met (until num_non_improved is reached)
+        for _ in range(temperature_length):  # this is the inner loop of the simulated annealing algorithm
+            neighbouring_ranking, new_cost, cost_difference = get_random_neighbouring_ranking(
+                current_ranking, tournament_weighting,
+                cost)  # this line calls the function that gets the neighbouring ranking and the cost of it
+            if cost_difference <= 0:  # if the new solution is better
+                current_ranking = neighbouring_ranking[:]  # accept the new ranking as the best ranking
+                cost = new_cost  # set the best cost to the lower cost calculated
             else:
                 q = random()
-                if q < (exp((-cost) / current_temperature)):
+                if q < (exp((
+                                    -cost) / current_temperature)):  # this accepts the new ranking with the probability equation provided in the SA algorithm
                     current_ranking = neighbouring_ranking[:]
                 else:
-                    loops_without_optimal_solution += 1
+                    loops_without_optimal_solution += 1  # if the new ranking isn't accepted, add 1 to loops_without_optimal_solution
 
-        current_temperature = current_temperature * cooling_ratio
-    print(" ")
-    print(f"final = {cost}")
-    print(time() - start_time)
+        current_temperature = current_temperature * cooling_ratio  # multiply the current temperature by the cooling ration to decrease it slightly for the next loop
+
+    print("Rank  |   Name ")  # output the ranks + names of the drivers in a readable/table format
+    for i in range(1, len(current_ranking)):
+        print(f"{i}   |   {tournament_participants[current_ranking[i]]}")
+
+    print(f"Kemedy Score = {cost}")  # output the total Kenedy Score / cost
+    print(float(time() - start_time) * 1000)  # output the total time running in milliseconds
 
 
-start_time = time()
-simulated_annealing_algorithm()
+start_time = time()  # get the time the program is executed
+simulated_annealing_algorithm()  # this calls the main SA algorithm
