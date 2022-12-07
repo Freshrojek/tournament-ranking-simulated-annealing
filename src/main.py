@@ -90,7 +90,7 @@ def get_random_neighbouring_ranking(current_ranking):
         sub_tour_end = int(current_ranking.index(current_ranking[start_edge_A]))
         sub_tour = current_ranking[int(current_ranking.index(remaining_participants[end_edge_B - 1])):int(
             current_ranking.index(current_ranking[start_edge_A]))]
-        second_edge = (start_edge_B, end_edge_B)
+        second_edge = (current_ranking[start_edge_B-1], current_ranking[end_edge_B-1])
         new_first_edge = (second_edge[0], first_edge[0])
         new_second_edge = (second_edge[1], first_edge[1])
     else:
@@ -99,7 +99,7 @@ def get_random_neighbouring_ranking(current_ranking):
             current_ranking.index(remaining_participants[start_edge_B - 1]))
         sub_tour = current_ranking[int(current_ranking.index(current_ranking[end_edge_A - 1])):int(
             current_ranking.index(remaining_participants[start_edge_B - 1]))]
-        second_edge = (start_edge_B + 2, end_edge_B + 2)
+        second_edge = (current_ranking[start_edge_B+1], current_ranking[end_edge_B+1])
         new_first_edge = (first_edge[0], second_edge[0])
         new_second_edge = (first_edge[1], second_edge[1])
 
@@ -108,28 +108,37 @@ def get_random_neighbouring_ranking(current_ranking):
 
     # print(f"reversed sub tour = {sub_tour}")
     current_ranking[sub_tour_start:sub_tour_end] = sub_tour
+    changed_ranking = [current_ranking[sub_tour_start - 1:sub_tour_end + 1]]
+    print(f"Changed ranking = {changed_ranking}")
     print(current_ranking)
 
     if ((start_edge_A == 0) and (end_edge_A == 0)) or ((start_edge_B == 0) and (end_edge_B == 0)):
         print("Error, both edges are 0")
-    return current_ranking, first_edge, second_edge, new_first_edge, new_second_edge
+    return current_ranking, first_edge, second_edge, new_first_edge, new_second_edge, changed_ranking
 
 
-def get_cost(tournament_participants, tournament_weighting, ranking):
+def get_cost(tournament_weighting, ranking):
     cost = 0
     i_over_j_wins = 0
     j_over_i_wins = 0
     for matchup, weighting in tournament_weighting.items():
         for i in range(len(ranking)):
             for j in range(i + 1, len(ranking)):
-                if matchup[0] == ranking[j] and matchup[1] == ranking[i]:
-                    # print(f"{ranking[j]} beat {ranking[i]} by {weighting}")
+                cost_difference = 0
+                j_over_i_wins = 0
+                i_over_j_wins = 0
+                if str(matchup[0]) == str(ranking[j]) and str(matchup[1]) == str(ranking[i]):
+                    print(f"{ranking[j]} beat {ranking[i]} by {weighting}")
                     j_over_i_wins = int(weighting)
-                if matchup[0] == ranking[i] and matchup[1] == ranking[j]:
+                if str(matchup[0]) == str(ranking[i]) and str(matchup[1]) == str(ranking[j]):
+                    print(f"{ranking[i]} beat {ranking[j]} by {weighting}")
                     i_over_j_wins = int(weighting)
-                if j_over_i_wins - i_over_j_wins > 0:
-                    cost = cost + (j_over_i_wins - i_over_j_wins)
-    # print(cost)
+                cost_difference = j_over_i_wins - i_over_j_wins
+                if cost_difference > 0:
+                    print(f"Cost difference = {cost_difference}")
+                    cost = cost + cost_difference
+
+    print(cost)
     return cost
 
 
@@ -152,58 +161,63 @@ def calculate_edge_cost(matchup, weighting, edge):
 
 
 def get_cost_difference(tournament_participants, tournament_weighting, first_edge, second_edge, new_first_edge,
-                        new_second_edge, cost):
+                        new_second_edge, changed_ranking, cost):
     cost_difference = 0
     new_cost = int(cost)
-    first_edge_cost_reduction = 0
-    second_edge_cost_reduction = 0
-    new_first_edge_cost_reduction = 0
-    new_second_edge_cost_reduction = 0
+    first_edge_cost = 0
+    second_edge_cost = 0
+    new_first_edge_cost = 0
+    new_second_edge_cost = 0
     print(f"first edge {first_edge}")
     print(f"second edge {second_edge}")
     print(f"new first edge {new_first_edge}")
     print(f"new second edge {new_second_edge}")
 
-    for matchup, weighting in tournament_weighting.items():
-        first_edge_cost_reduction = calculate_edge_cost(matchup, weighting, first_edge)
-        second_edge_cost_reduction = calculate_edge_cost(matchup, weighting, second_edge)
+    first_edge_cost - get_cost(tournament_weighting, first_edge)
+    print(f"first_edge_cost = {first_edge_cost}")
 
-        new_first_edge_cost_reduction = calculate_edge_cost(matchup, weighting, new_first_edge)
+    second_edge_cost - get_cost(tournament_weighting, second_edge)
+    print(f"second_edge_cost = {second_edge_cost}")
+    # for matchup, weighting in tournament_weighting.items():
+    #     first_edge_cost_reduction = calculate_edge_cost(matchup, weighting, first_edge)
+    #     second_edge_cost_reduction = calculate_edge_cost(matchup, weighting, second_edge)
+    #
+    #     new_first_edge_cost_reduction = calculate_edge_cost(matchup, weighting, new_first_edge)
+    #
+    #     new_second_edge_cost_reduction = calculate_edge_cost(matchup, weighting, new_second_edge)
+    #     if first_edge_cost_reduction != 0 and second_edge_cost_reduction != 0 and new_first_edge_cost_reduction != 0 and new_second_edge_cost_reduction != 0:
+    #         print(first_edge_cost_reduction, second_edge_cost_reduction, new_first_edge_cost_reduction,
+    #               new_second_edge_cost_reduction)
+    #     new_cost = new_cost - (int((first_edge_cost_reduction + second_edge_cost_reduction))) + (
+    #                 new_first_edge_cost_reduction + new_second_edge_cost_reduction)
 
-        new_second_edge_cost_reduction = calculate_edge_cost(matchup, weighting, new_second_edge)
-        if first_edge_cost_reduction != 0 and second_edge_cost_reduction != 0 and new_first_edge_cost_reduction != 0 and new_second_edge_cost_reduction != 0:
-            print(first_edge_cost_reduction, second_edge_cost_reduction, new_first_edge_cost_reduction,
-                  new_second_edge_cost_reduction)
-        new_cost = new_cost - (int((first_edge_cost_reduction + second_edge_cost_reduction))) + (
-                    new_first_edge_cost_reduction + new_second_edge_cost_reduction)
-
-        # if first_edge[1] == matchup[0] and first_edge[0] == matchup[1]:
-        #     print(matchup, weighting)
-        #     print(f"the first cost is reduced by {weighting}")
-        #     first_edge_cost_reduction = int(weighting)
-        # if second_edge[1] == matchup[0] and second_edge[0] == matchup[1]:
-        #     print(matchup, weighting)
-        #     print(f"the second cost is reduced by {weighting}")
-        #     second_edge_cost_reduction = int(weighting)
-        # if new_first_edge[1] == matchup[0] and new_first_edge[0] == matchup[1]:
-        #     print(matchup, weighting)
-        #     print(f"first new edges cost is reduced by {weighting}")
-        #     new_first_edge_cost_reduction = int(weighting)
-        # if new_second_edge[1] == matchup[0] and new_second_edge[0] == matchup[1]:
-        #     print(matchup, weighting)
-        #     print(f"second new edges cost is reduced by {weighting}")
-        #     new_second_edge_cost_reduction = int(weighting)
+    # if first_edge[1] == matchup[0] and first_edge[0] == matchup[1]:
+    #     print(matchup, weighting)
+    #     print(f"the first cost is reduced by {weighting}")
+    #     first_edge_cost_reduction = int(weighting)
+    # if second_edge[1] == matchup[0] and second_edge[0] == matchup[1]:
+    #     print(matchup, weighting)
+    #     print(f"the second cost is reduced by {weighting}")
+    #     second_edge_cost_reduction = int(weighting)
+    # if new_first_edge[1] == matchup[0] and new_first_edge[0] == matchup[1]:
+    #     print(matchup, weighting)
+    #     print(f"first new edges cost is reduced by {weighting}")
+    #     new_first_edge_cost_reduction = int(weighting)
+    # if new_second_edge[1] == matchup[0] and new_second_edge[0] == matchup[1]:
+    #     print(matchup, weighting)
+    #     print(f"second new edges cost is reduced by {weighting}")
+    #     new_second_edge_cost_reduction = int(weighting)
     print(f"cost = {cost}")
     print(f"new cost = {new_cost}")
     return cost, cost_difference
 
 
 def simulated_annealing_algorithm():
-    tournament_participants, tournament_weighting = get_data()
-    # tournament_weighting = {("B", "C"): "1", ("D", "E"): "6", ("G", "F"): "3", ("B", "A"): "2", ("D", "E"): "4",
-    #                         ("A", "B"): "9", ("F", "A"): "6"}
-    # tournament_participants = {"A": "Alice", "B": "bettie", "C": "Charlie", "D": "Dan", "E": "Ellie", "F": "Fred",
-    #                            "G": "Gina", "H": "Harry"}
+    # tournament_participants, tournament_weighting = get_data()
+    tournament_weighting = {("B", "C"): "1", ("D", "E"): "6", ("G", "F"): "3", ("B", "A"): "2", ("D", "E"): "4",
+                            ("A", "B"): "9", ("F", "A"): "6"}
+    tournament_participants = {"A": "Alice", "B": "bettie", "C": "Charlie", "D": "Dan", "E": "Ellie", "F": "Fred",
+                               "G": "Gina", "H": "Harry"}
     # temperature_length = 10
     temperature_length = 1
     cooling_ration = 0.95
@@ -211,13 +225,13 @@ def simulated_annealing_algorithm():
     loops_without_optimal_solution = 0
     current_ranking, initial_ranking = [i for i in tournament_participants], [i for i in tournament_participants]
     # get_random_neighbouring_ranking(initial_ranking, previous_ranking)
-    cost = get_cost(tournament_participants, tournament_weighting, initial_ranking)
+    cost = get_cost(tournament_weighting, initial_ranking)
     # cost = get_cost(tournament_participants, tournament_weighting, previous_cost)
     for i in range(int(temperature_length)):
-        neighbouring_ranking, first_edge, second_edge, new_first_edge, new_second_edge = get_random_neighbouring_ranking(
+        neighbouring_ranking, first_edge, second_edge, new_first_edge, new_second_edge, changed_ranking = get_random_neighbouring_ranking(
             current_ranking)
         cost, cost_difference = get_cost_difference(tournament_participants, tournament_weighting, first_edge,
-                                                    second_edge, new_first_edge, new_second_edge, cost)
+                                                    second_edge, new_first_edge, new_second_edge, changed_ranking, cost)
     print(cost)
 
 
